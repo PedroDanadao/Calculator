@@ -1,4 +1,5 @@
 // get the DOM elements
+const DISPLAY_DIV = document.querySelector(".display") as HTMLDivElement;
 const NUMBERS_CONTAINERS_DIV = document.querySelector(".numbers_container") as HTMLButtonElement;
 const OPERATORS_CONTAINERS_DIV = document.querySelector(".operators_container") as HTMLButtonElement;
 
@@ -10,6 +11,19 @@ const BRIGHTER_RED = "rgb(255, 63, 63)";
 
 document.addEventListener("mouseup", () => buttonMouseUp());
 let CURRENT_PRESSED_BUTTON: any = undefined;
+
+let OPERATION_STRING = '';
+
+const OPERATORS_LIST = ['+', '-', '*', '/', '='];
+const MULTIPLY_DIVIDE = ['*', '/'];
+
+const OPERATORS_TO_FUNCTIONS = {
+    '+': (a: number, b: number) => a + b,
+    '-': (a: number, b: number) => a - b,
+    '*': (a: number, b: number) => a * b,
+    '/': (a: number, b: number) => a / b
+}
+
 
 // make the buttons of the calculator
 function addButton(buttonString: string, isNumberButton: boolean) {
@@ -28,13 +42,14 @@ function addButton(buttonString: string, isNumberButton: boolean) {
     newButton.addEventListener("mouseover", darkenButton);
     newButton.addEventListener("mouseleave", turnBackColorEvent);
     newButton.addEventListener("mousedown", buttonMouseDown);
+    newButton.addEventListener("mouseup", buttonChosen);
 }
 
 for(let i=1; i <= 10; i++) {
     addButton( String(i % 10), true );
 }
 
-for(let op of ['+', '-', '*', '/', '=']) {
+for(let op of OPERATORS_LIST) {
     addButton(op, false);
 }
 
@@ -88,4 +103,64 @@ function buttonMouseUp() {
         turnBackColor(CURRENT_PRESSED_BUTTON);
 }
 
-// make the event Listeners
+function buttonChosen(event: Event) {
+    const mouseUpButton = event.target as HTMLButtonElement;
+
+    if (mouseUpButton === CURRENT_PRESSED_BUTTON) {
+        changeDisplay(mouseUpButton.innerText);
+    }
+}
+
+function changeDisplay(newChar: string) {
+    /**
+     * changes the display based on the passed char
+     */
+    if (newChar === '=') {
+        return calculateExpression()
+    }
+
+    if ( OPERATORS_LIST.includes(DISPLAY_DIV.innerText.slice(-1)) ) {
+        newChar = ` ${newChar}`;
+    }
+
+    if (OPERATORS_LIST.includes(newChar)) {
+        newChar = ` ${newChar}`;
+    }
+
+    DISPLAY_DIV.innerText += newChar;
+}
+
+function calculateExpression() {
+    const operandsAndOperatorsStrings = DISPLAY_DIV.innerText.split(' ');
+    const operandsAndOperators = operandsAndOperatorsStrings.map(checkOperationString);
+
+    let result = calculateRecursive(operandsAndOperators[0], operandsAndOperators[1], operandsAndOperators.slice(2));
+
+    result = Math.round(result)
+
+    console.log(result);
+}
+
+function calculateRecursive(num: number | string, operator: string | number, restOfExpression: Array<any>) {
+    const operationFunction = OPERATORS_TO_FUNCTIONS[operator];
+
+    if (restOfExpression.length === 1) {
+        return operationFunction(num, restOfExpression[0]);
+    }
+
+    if ( ! MULTIPLY_DIVIDE.includes(operator) ){
+        const nextNumber = restOfExpression[0];
+        const nextOperator = restOfExpression[1];
+        const newRest = restOfExpression.slice(2);
+        return operationFunction(num, calculateRecursive(nextNumber, nextOperator, newRest));
+    }
+
+    const nextNumber = operationFunction(num, restOfExpression[0]);
+    const nextOperator = restOfExpression[1];
+    const newRest = restOfExpression.slice(2);
+    return calculateRecursive(nextNumber, nextOperator, newRest);
+}
+
+function checkOperationString(opString: string) {
+    return OPERATORS_LIST.includes(opString) ? opString : Number(opString)
+}
