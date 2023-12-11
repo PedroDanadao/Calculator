@@ -53,6 +53,8 @@ for(let op of OPERATORS_LIST) {
     addButton(op, false);
 }
 
+addButton('C', false);
+
 function darkenButton(event: Event) {
     const button = event.target as HTMLButtonElement;
 
@@ -115,8 +117,16 @@ function changeDisplay(newChar: string) {
     /**
      * changes the display based on the passed char
      */
+    if (DISPLAY_DIV.innerText === "ERROR") {
+        DISPLAY_DIV.innerText = '';
+    }
+
     if (newChar === '=') {
         return calculateExpression()
+    }
+
+    if (newChar === 'C') {
+        return DISPLAY_DIV.innerText = '';
     }
 
     if ( OPERATORS_LIST.includes(DISPLAY_DIV.innerText.slice(-1)) ) {
@@ -131,14 +141,30 @@ function changeDisplay(newChar: string) {
 }
 
 function calculateExpression() {
+    // check first if there is a division by 0 in the expression. If there is 
+    // then the display is changed to ERROR
+
+    if (DISPLAY_DIV.innerText.includes("/ 0")) {
+        DISPLAY_DIV.innerText = "ERROR";
+    }
+
     const operandsAndOperatorsStrings = DISPLAY_DIV.innerText.split(' ');
     const operandsAndOperators = operandsAndOperatorsStrings.map(checkOperationString);
 
+    if (operandsAndOperators.length < 3) return;
+
+    let addToResult = '';
+    let lastItem = operandsAndOperators[operandsAndOperators.length - 1];
+    if ( OPERATORS_LIST.includes(lastItem) ) {
+        addToResult = ` ${lastItem}`;
+        operandsAndOperators.pop();
+    }
+
     let result = calculateRecursive(operandsAndOperators[0], operandsAndOperators[1], operandsAndOperators.slice(2));
 
-    result = Math.round(result)
+    result = Math.round(result * 100000) / 100000;
 
-    console.log(result);
+    DISPLAY_DIV.innerText = `${result}` + addToResult;
 }
 
 function calculateRecursive(num: number | string, operator: string | number, restOfExpression: Array<any>) {

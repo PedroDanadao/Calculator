@@ -42,6 +42,7 @@ for (var _i = 0, OPERATORS_LIST_1 = OPERATORS_LIST; _i < OPERATORS_LIST_1.length
     var op = OPERATORS_LIST_1[_i];
     addButton(op, false);
 }
+addButton('C', false);
 function darkenButton(event) {
     var button = event.target;
     if (button.className === "number_button") {
@@ -91,8 +92,14 @@ function changeDisplay(newChar) {
     /**
      * changes the display based on the passed char
      */
+    if (DISPLAY_DIV.innerText === "ERROR") {
+        DISPLAY_DIV.innerText = '';
+    }
     if (newChar === '=') {
         return calculateExpression();
+    }
+    if (newChar === 'C') {
+        return DISPLAY_DIV.innerText = '';
     }
     if (OPERATORS_LIST.includes(DISPLAY_DIV.innerText.slice(-1))) {
         newChar = " " + newChar;
@@ -103,10 +110,24 @@ function changeDisplay(newChar) {
     DISPLAY_DIV.innerText += newChar;
 }
 function calculateExpression() {
+    // check first if there is a division by 0 in the expression. If there is 
+    // then the display is changed to ERROR
+    if (DISPLAY_DIV.innerText.includes("/ 0")) {
+        DISPLAY_DIV.innerText = "ERROR";
+    }
     var operandsAndOperatorsStrings = DISPLAY_DIV.innerText.split(' ');
     var operandsAndOperators = operandsAndOperatorsStrings.map(checkOperationString);
+    if (operandsAndOperators.length < 3)
+        return;
+    var addToResult = '';
+    var lastItem = operandsAndOperators[operandsAndOperators.length - 1];
+    if (OPERATORS_LIST.includes(lastItem)) {
+        addToResult = " " + lastItem;
+        operandsAndOperators.pop();
+    }
     var result = calculateRecursive(operandsAndOperators[0], operandsAndOperators[1], operandsAndOperators.slice(2));
-    console.log(result);
+    result = Math.round(result * 100000) / 100000;
+    DISPLAY_DIV.innerText = "" + result + addToResult;
 }
 function calculateRecursive(num, operator, restOfExpression) {
     var operationFunction = OPERATORS_TO_FUNCTIONS[operator];
