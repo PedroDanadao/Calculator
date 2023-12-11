@@ -24,6 +24,11 @@ const OPERATORS_TO_FUNCTIONS = {
     '/': (a: number, b: number) => a / b
 }
 
+const ARROW_CHAR = "\u2190";
+
+document.addEventListener("keyup", keyboardPressed);
+const ALL_KEYS = "1234567890+-*/=Cc.,"
+
 
 // make the buttons of the calculator
 function addButton(buttonString: string, isNumberButton: boolean) {
@@ -54,6 +59,10 @@ for(let op of OPERATORS_LIST) {
 }
 
 addButton('C', false);
+
+addButton('.', true);
+
+addButton(ARROW_CHAR, false);
 
 function darkenButton(event: Event) {
     const button = event.target as HTMLButtonElement;
@@ -122,13 +131,23 @@ function changeDisplay(newChar: string) {
     }
 
     if (newChar === '=') {
-        return calculateExpression()
+        return calculateExpression();
     }
 
-    if (newChar === 'C') {
+    if (newChar === 'C' || newChar === 'c') {
         return DISPLAY_DIV.innerText = '';
     }
 
+    if (newChar === '.' || newChar === ',') {
+        return addDot();
+    }
+
+    if (newChar === ARROW_CHAR) {
+        return eraseChar();
+    }
+
+    // if the last character in the display is an operator or the current 
+    // pressed button is an operator, then add a space to the newChar string
     if ( OPERATORS_LIST.includes(DISPLAY_DIV.innerText.slice(-1)) ) {
         newChar = ` ${newChar}`;
     }
@@ -189,4 +208,46 @@ function calculateRecursive(num: number | string, operator: string | number, res
 
 function checkOperationString(opString: string) {
     return OPERATORS_LIST.includes(opString) ? opString : Number(opString)
+}
+
+function addDot() {
+    /**
+     * Adds a dot to the display if the conditions allow it
+     */
+    const displayItems = DISPLAY_DIV.innerText.split(' ');
+
+    if (displayItems[0] === '') {
+        return;
+    }
+
+    const lastItem = displayItems[displayItems.length - 1];
+
+    if ( OPERATORS_LIST.includes(lastItem) || lastItem.includes('.') ) {
+        return;
+    }
+
+    DISPLAY_DIV.innerText += '.';
+}
+
+function eraseChar() {
+    /**
+     * erases the last char from the display
+     */
+    const displayText = DISPLAY_DIV.innerText;
+
+    if (! displayText) return;
+
+    DISPLAY_DIV.innerText = displayText.slice(0, displayText.length - 1);
+}
+
+function keyboardPressed(event: KeyboardEvent) {
+    const pressedKey = event.key;
+
+    if ( ALL_KEYS.includes(pressedKey) ) {
+        changeDisplay(pressedKey);
+    }
+
+    if (pressedKey === "Backspace") {
+        changeDisplay(ARROW_CHAR);
+    }
 }

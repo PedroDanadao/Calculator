@@ -18,6 +18,9 @@ var OPERATORS_TO_FUNCTIONS = {
     '*': function (a, b) { return a * b; },
     '/': function (a, b) { return a / b; }
 };
+var ARROW_CHAR = "\u2190";
+document.addEventListener("keyup", keyboardPressed);
+var ALL_KEYS = "1234567890+-*/=Cc.,";
 // make the buttons of the calculator
 function addButton(buttonString, isNumberButton) {
     var newButton = document.createElement("div");
@@ -43,6 +46,8 @@ for (var _i = 0, OPERATORS_LIST_1 = OPERATORS_LIST; _i < OPERATORS_LIST_1.length
     addButton(op, false);
 }
 addButton('C', false);
+addButton('.', true);
+addButton(ARROW_CHAR, false);
 function darkenButton(event) {
     var button = event.target;
     if (button.className === "number_button") {
@@ -98,9 +103,17 @@ function changeDisplay(newChar) {
     if (newChar === '=') {
         return calculateExpression();
     }
-    if (newChar === 'C') {
+    if (newChar === 'C' || newChar === 'c') {
         return DISPLAY_DIV.innerText = '';
     }
+    if (newChar === '.' || newChar === ',') {
+        return addDot();
+    }
+    if (newChar === ARROW_CHAR) {
+        return eraseChar();
+    }
+    // if the last character in the display is an operator or the current 
+    // pressed button is an operator, then add a space to the newChar string
     if (OPERATORS_LIST.includes(DISPLAY_DIV.innerText.slice(-1))) {
         newChar = " " + newChar;
     }
@@ -147,4 +160,36 @@ function calculateRecursive(num, operator, restOfExpression) {
 }
 function checkOperationString(opString) {
     return OPERATORS_LIST.includes(opString) ? opString : Number(opString);
+}
+function addDot() {
+    /**
+     * Adds a dot to the display if the conditions allow it
+     */
+    var displayItems = DISPLAY_DIV.innerText.split(' ');
+    if (displayItems[0] === '') {
+        return;
+    }
+    var lastItem = displayItems[displayItems.length - 1];
+    if (OPERATORS_LIST.includes(lastItem) || lastItem.includes('.')) {
+        return;
+    }
+    DISPLAY_DIV.innerText += '.';
+}
+function eraseChar() {
+    /**
+     * erases the last char from the display
+     */
+    var displayText = DISPLAY_DIV.innerText;
+    if (!displayText)
+        return;
+    DISPLAY_DIV.innerText = displayText.slice(0, displayText.length - 1);
+}
+function keyboardPressed(event) {
+    var pressedKey = event.key;
+    if (ALL_KEYS.includes(pressedKey)) {
+        changeDisplay(pressedKey);
+    }
+    if (pressedKey === "Backspace") {
+        changeDisplay(ARROW_CHAR);
+    }
 }
