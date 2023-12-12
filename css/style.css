@@ -40,6 +40,8 @@ body {
 
     overflow: hidden;
     white-space: nowrap;
+
+    box-shadow: black 1px 1px 5px inset;
 }
 
 .buttons_container {
@@ -47,6 +49,7 @@ body {
     height: 700px;
 
     display: flex;
+    justify-content: space-around;
     align-items: center;
     gap: 5px;
 }
@@ -63,6 +66,12 @@ body {
     align-content: flex-start;
 }
 
+
+
+.spacer_div {
+    width: 20px;
+}
+
 .operators_container {
     width: 137px;
     height: 680px;
@@ -75,29 +84,31 @@ body {
 }
 
 .number_button {
-    font-size: 60px;
-    color: white;
-    text-align: center;
     width: 110px;
     height: 160px;
     background-color: blue;
-    border-radius: 10px;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 .operator_button {
-    font-size: 60px;
-    color: white;
-    text-align: center;
     width: 80px;
     height: 125px;
     background-color: red;
+}
+
+.number_button, .operator_button {
+    color: white;
+    text-align: center;
+    font-size: 60px;
     border-radius: 10px;
 
     display: flex;
     justify-content: center;
     align-items: center;
+
+    box-shadow: rgba(255,255,255,.6) 2px 2px 0 inset, black 1px 1px 2px;
+}
+
+
+.number_button:active, .operator_button:active {
+    box-shadow: black 1px 1px 0 inset, black 1px 1px 4px inset;
 }

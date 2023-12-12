@@ -7,6 +7,7 @@ var DARKER_BLUE = "rgb(0, 0, 136)";
 var BRIGHTER_BLUE = "rgb(63, 63, 255)";
 var DARKER_RED = "rgb(136, 0, 0)";
 var BRIGHTER_RED = "rgb(255, 63, 63)";
+var TEST_BUTTON = undefined;
 document.addEventListener("mouseup", function () { return buttonMouseUp(); });
 var CURRENT_PRESSED_BUTTON = undefined;
 var OPERATION_STRING = '';
@@ -21,9 +22,10 @@ var OPERATORS_TO_FUNCTIONS = {
 var ARROW_CHAR = "\u2190";
 document.addEventListener("keyup", keyboardPressed);
 var ALL_KEYS = "1234567890+-*/=Cc.,";
+var CHAR_TO_BUTTON = {};
 // make the buttons of the calculator
 function addButton(buttonString, isNumberButton) {
-    var newButton = document.createElement("div");
+    var newButton = document.createElement("button");
     newButton.innerText = buttonString;
     if (isNumberButton) {
         newButton.className = "number_button";
@@ -33,10 +35,12 @@ function addButton(buttonString, isNumberButton) {
         newButton.className = "operator_button";
         OPERATORS_CONTAINERS_DIV.appendChild(newButton);
     }
-    newButton.addEventListener("mouseover", darkenButton);
+    newButton.addEventListener("mouseover", darkenButtonEvent);
     newButton.addEventListener("mouseleave", turnBackColorEvent);
-    newButton.addEventListener("mousedown", buttonMouseDown);
-    newButton.addEventListener("mouseup", buttonChosen);
+    newButton.addEventListener("mousedown", buttonMouseDownEvent);
+    newButton.addEventListener("mouseup", buttonChosenEvent);
+    TEST_BUTTON = newButton;
+    CHAR_TO_BUTTON[buttonString] = newButton;
 }
 for (var i = 1; i <= 10; i++) {
     addButton(String(i % 10), true);
@@ -48,8 +52,11 @@ for (var _i = 0, OPERATORS_LIST_1 = OPERATORS_LIST; _i < OPERATORS_LIST_1.length
 addButton('C', false);
 addButton('.', true);
 addButton(ARROW_CHAR, false);
-function darkenButton(event) {
+function darkenButtonEvent(event) {
     var button = event.target;
+    darkenButton(button);
+}
+function darkenButton(button) {
     if (button.className === "number_button") {
         button["style"]["background-color"] = DARKER_BLUE;
     }
@@ -69,8 +76,11 @@ function turnBackColor(button) {
         button["style"]["background-color"] = "red";
     }
 }
-function brightenButton(event) {
+function brightenButtonEvent(event) {
     var button = event.target;
+    brightenButton(button);
+}
+function brightenButton(button) {
     if (button.className === "number_button") {
         button["style"]["background-color"] = BRIGHTER_BLUE;
     }
@@ -78,16 +88,16 @@ function brightenButton(event) {
         button["style"]["background-color"] = BRIGHTER_RED;
     }
 }
-function buttonMouseDown(event) {
+function buttonMouseDownEvent(event) {
     var button = event.target;
     CURRENT_PRESSED_BUTTON = button;
-    brightenButton(event);
+    brightenButton(button);
 }
 function buttonMouseUp() {
     if (CURRENT_PRESSED_BUTTON)
         turnBackColor(CURRENT_PRESSED_BUTTON);
 }
-function buttonChosen(event) {
+function buttonChosenEvent(event) {
     var mouseUpButton = event.target;
     if (mouseUpButton === CURRENT_PRESSED_BUTTON) {
         changeDisplay(mouseUpButton.innerText);
@@ -112,9 +122,17 @@ function changeDisplay(newChar) {
     if (newChar === ARROW_CHAR) {
         return eraseChar();
     }
+    var lastDisplayChar = DISPLAY_DIV.innerText.slice(-1);
+    // deal with the cases where the user inputs a operator and the display ends 
+    // with an operator or the display is empty(nothing must be added to the 
+    // display)
+    var emptyOrOperator = OPERATORS_LIST.includes(lastDisplayChar) || !DISPLAY_DIV.innerText;
+    if (OPERATORS_LIST.includes(newChar) && emptyOrOperator) {
+        return;
+    }
     // if the last character in the display is an operator or the current 
     // pressed button is an operator, then add a space to the newChar string
-    if (OPERATORS_LIST.includes(DISPLAY_DIV.innerText.slice(-1))) {
+    if (OPERATORS_LIST.includes(lastDisplayChar)) {
         newChar = " " + newChar;
     }
     if (OPERATORS_LIST.includes(newChar)) {
@@ -187,9 +205,16 @@ function eraseChar() {
 function keyboardPressed(event) {
     var pressedKey = event.key;
     if (ALL_KEYS.includes(pressedKey)) {
+        playPressedAnimation(pressedKey);
         changeDisplay(pressedKey);
     }
     if (pressedKey === "Backspace") {
+        playPressedAnimation(ARROW_CHAR);
         changeDisplay(ARROW_CHAR);
     }
+}
+function playPressedAnimation(pressedKey) {
+    var keyButton = CHAR_TO_BUTTON[pressedKey.toUpperCase()];
+    brightenButton(keyButton);
+    setTimeout(function () { return turnBackColor(keyButton); }, 100);
 }

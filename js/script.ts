@@ -9,6 +9,8 @@ const BRIGHTER_BLUE = "rgb(63, 63, 255)";
 const DARKER_RED = "rgb(136, 0, 0)";
 const BRIGHTER_RED = "rgb(255, 63, 63)";
 
+let TEST_BUTTON: HTMLButtonElement = undefined;
+
 document.addEventListener("mouseup", () => buttonMouseUp());
 let CURRENT_PRESSED_BUTTON: any = undefined;
 
@@ -30,9 +32,11 @@ document.addEventListener("keyup", keyboardPressed);
 const ALL_KEYS = "1234567890+-*/=Cc.,"
 
 
+const CHAR_TO_BUTTON = {}
+
 // make the buttons of the calculator
 function addButton(buttonString: string, isNumberButton: boolean) {
-    const newButton = document.createElement("div");
+    const newButton = document.createElement("button");
     newButton.innerText = buttonString;
     
     if(isNumberButton){
@@ -44,10 +48,14 @@ function addButton(buttonString: string, isNumberButton: boolean) {
         OPERATORS_CONTAINERS_DIV.appendChild(newButton);
     }
 
-    newButton.addEventListener("mouseover", darkenButton);
+    newButton.addEventListener("mouseover", darkenButtonEvent);
     newButton.addEventListener("mouseleave", turnBackColorEvent);
-    newButton.addEventListener("mousedown", buttonMouseDown);
-    newButton.addEventListener("mouseup", buttonChosen);
+    newButton.addEventListener("mousedown", buttonMouseDownEvent);
+    newButton.addEventListener("mouseup", buttonChosenEvent);
+
+    TEST_BUTTON = newButton;
+
+    CHAR_TO_BUTTON[buttonString] = newButton;
 }
 
 for(let i=1; i <= 10; i++) {
@@ -64,9 +72,13 @@ addButton('.', true);
 
 addButton(ARROW_CHAR, false);
 
-function darkenButton(event: Event) {
+function darkenButtonEvent(event: Event) {
     const button = event.target as HTMLButtonElement;
 
+    darkenButton(button);
+}
+
+function darkenButton(button: HTMLButtonElement) {
     if (button.className === "number_button"){
         button["style"]["background-color"] = DARKER_BLUE;
     }
@@ -90,9 +102,13 @@ function turnBackColor(button: HTMLButtonElement) {
     }
 }
 
-function brightenButton(event: Event) {
+function brightenButtonEvent(event: Event) {
     const button = event.target as HTMLButtonElement;
 
+    brightenButton(button);
+}
+
+function brightenButton(button: HTMLButtonElement) {
     if (button.className === "number_button"){
         button["style"]["background-color"] = BRIGHTER_BLUE;
     }
@@ -101,12 +117,12 @@ function brightenButton(event: Event) {
     }
 }
 
-function buttonMouseDown(event: Event) {
+function buttonMouseDownEvent(event: Event) {
     const button = event.target as HTMLButtonElement;
 
     CURRENT_PRESSED_BUTTON = button;
     
-    brightenButton(event);
+    brightenButton(button);
 }
 
 function buttonMouseUp() {
@@ -114,7 +130,7 @@ function buttonMouseUp() {
         turnBackColor(CURRENT_PRESSED_BUTTON);
 }
 
-function buttonChosen(event: Event) {
+function buttonChosenEvent(event: Event) {
     const mouseUpButton = event.target as HTMLButtonElement;
 
     if (mouseUpButton === CURRENT_PRESSED_BUTTON) {
@@ -146,9 +162,19 @@ function changeDisplay(newChar: string) {
         return eraseChar();
     }
 
+    const lastDisplayChar = DISPLAY_DIV.innerText.slice(-1);
+
+    // deal with the cases where the user inputs a operator and the display ends 
+    // with an operator or the display is empty(nothing must be added to the 
+    // display)
+    const emptyOrOperator = OPERATORS_LIST.includes(lastDisplayChar) || ! DISPLAY_DIV.innerText;
+    if ( OPERATORS_LIST.includes(newChar) && emptyOrOperator ) {
+        return;
+    }
+
     // if the last character in the display is an operator or the current 
     // pressed button is an operator, then add a space to the newChar string
-    if ( OPERATORS_LIST.includes(DISPLAY_DIV.innerText.slice(-1)) ) {
+    if ( OPERATORS_LIST.includes(lastDisplayChar) ) {
         newChar = ` ${newChar}`;
     }
 
@@ -242,12 +268,22 @@ function eraseChar() {
 
 function keyboardPressed(event: KeyboardEvent) {
     const pressedKey = event.key;
-
+    
     if ( ALL_KEYS.includes(pressedKey) ) {
+        playPressedAnimation(pressedKey);
+
         changeDisplay(pressedKey);
     }
-
+    
     if (pressedKey === "Backspace") {
+        playPressedAnimation(ARROW_CHAR);
+
         changeDisplay(ARROW_CHAR);
     }
+}
+
+function playPressedAnimation(pressedKey: string) {
+    const keyButton = CHAR_TO_BUTTON[pressedKey.toUpperCase()];
+    brightenButton(keyButton);
+    setTimeout(()=>turnBackColor(keyButton), 100);
 }
